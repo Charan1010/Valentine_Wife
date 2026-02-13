@@ -171,6 +171,41 @@
         will-change: transform, opacity;
       }
 
+      .bear-container {
+        position: fixed;
+        right: 1.4rem;
+        bottom: 0.9rem;
+        z-index: 2;
+        display: flex;
+        align-items: flex-end;
+        gap: 0.4rem;
+        pointer-events: none;
+      }
+
+      .bear-emoji {
+        font-size: 2.6rem;
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.25));
+        transform-origin: bottom center;
+      }
+
+      .bear-hidden {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      .bear-visible {
+        opacity: 1;
+        transform: translateY(0);
+        transition: opacity 0.35s ease-out, transform 0.35s ease-out;
+      }
+
+      .kiss {
+        position: absolute;
+        font-size: 1.5rem;
+        will-change: transform, opacity;
+        pointer-events: none;
+      }
+
       .badge {
         display: inline-flex;
         align-items: center;
@@ -212,8 +247,12 @@
         const sureNoBtn = document.getElementById("sure-no-btn");
 
         const heartsLayer = document.querySelector(".hearts-container");
+        const bearContainer = document.querySelector(".bear-container");
+        const bearEmoji = document.querySelector(".bear-emoji");
 
         let noEscapeLevel = 0;
+        let hasSaidYes = false;
+        let kissIntervalId = null;
 
         function showScreen(target) {
           [screen1, screen2, screen3].forEach((s) =>
@@ -224,6 +263,15 @@
 
         function randomBetween(min, max) {
           return Math.random() * (max - min) + min;
+        }
+
+        function showBear() {
+          if (!bearContainer) return;
+          bearContainer.classList.remove("bear-hidden");
+          bearContainer.classList.add("bear-visible");
+          if (!kissIntervalId) {
+            kissIntervalId = setInterval(spawnKiss, 2200);
+          }
         }
 
         function moveNoButton() {
@@ -246,6 +294,46 @@
           noBtn.style.top = newTop + "px";
 
           noEscapeLevel = Math.min(noEscapeLevel + 1, 12);
+        }
+
+        function spawnKiss() {
+          if (typeof anime === "undefined") return;
+          const kiss = document.createElement("div");
+          kiss.className = "kiss";
+          kiss.textContent = "😘";
+
+          document.body.appendChild(kiss);
+
+          const startX = window.innerWidth - 90 + randomBetween(-10, 10);
+          const startY = window.innerHeight - 90 + randomBetween(-6, 6);
+          kiss.style.left = startX + "px";
+          kiss.style.top = startY + "px";
+
+          anime({
+            targets: kiss,
+            translateX: randomBetween(-40, -120),
+            translateY: randomBetween(-120, -220),
+            opacity: [
+              { value: [0, 1], duration: 250, easing: "easeOutQuad" },
+              { value: 0, duration: 400, delay: 650, easing: "linear" },
+            ],
+            scale: [
+              { value: [0.7, 1.1], duration: 280, easing: "easeOutBack" },
+              { value: 1, duration: 420, easing: "easeInOutSine" },
+            ],
+            duration: 1300,
+            complete: () => kiss.remove(),
+          });
+
+          if (bearEmoji) {
+            anime({
+              targets: bearEmoji,
+              translateX: [
+                { value: -4, duration: 80, easing: "easeInOutSine" },
+                { value: 0, duration: 80, easing: "easeInOutSine" },
+              ],
+            });
+          }
         }
 
         function spawnHeartsBurst() {
@@ -293,6 +381,8 @@
         }
 
         yesBtn.addEventListener("click", () => {
+          hasSaidYes = true;
+          showBear();
           showScreen(screen2);
         });
 
@@ -324,6 +414,9 @@
   <body>
     <div class="overlay"></div>
     <div class="hearts-container"></div>
+    <div class="bear-container bear-hidden" aria-hidden="true">
+      <div class="bear-emoji">ʕ•ᴥ•ʔ</div>
+    </div>
     <main class="card" aria-live="polite">
       <div class="badge">
         <span>Special delivery</span>
